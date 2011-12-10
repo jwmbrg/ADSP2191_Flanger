@@ -7,7 +7,7 @@ main.asm
 #include "def2191_stud-1.h"
 #include "lcd_macro.h"
 #define   CMAX 29
-#define   CMIN 4
+#define   CMIN 0
 
 #define   DMAX 14
 #define   DMIN 1	
@@ -51,8 +51,10 @@ main.asm
 
 
 
-
+.extern init_buffers;
 .extern centerDelay;
+.extern delaySamples;
+
 .extern centerDeviation;
 .extern frequency;
 .extern mix;
@@ -109,7 +111,7 @@ Start:
 	
 	
 	AR=0;
-
+	call  init_buffers;
 	call changetodelay;
 
 	
@@ -334,8 +336,30 @@ endInc:
 changetodelay:
 	Output_LCD_Token(cdelaytext,16,1,0);
 	AR=dm(centerDelay);
+
+	//should be removed
+
 	dm(tempdigit)=AR;
+	//AR=MSTAT
+	//AR=Setbit M_MODE Of AR;	
+	ena M_MODE;
+	//MSTAT=AR;
+	nop;
+	MX0=AR;
+	MY0=441;
+	MR=0;
+	MR=MR+MX0*MY0 (SS);
+	AR=MR0;
+	//AR=12000;
+
+	dm(delaySamples)=AR;	
+
+	//AR=dm(centerDelay);
+	
 	call printadigit;
+	nop;
+
+	
 	RTS;
 	nop;
 

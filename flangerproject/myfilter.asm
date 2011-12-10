@@ -11,8 +11,8 @@
 .extern		shouldShiftMR;
 .extern 	errstring;
 .extern		Left_Channel_Out;
-.extern 		Right_Channel_Out;
-
+.extern 	Right_Channel_Out;
+.extern delaySamples;
 /*#define 	Coeff_size		3
 #define		y_size		2
 .var coeffs[Coeff_size] ="ass5bcoeffs.dat";
@@ -36,10 +36,23 @@ myfilter:
 		M4=1;
 		
 		AR=dm(Left_Channel);
-		MODIFY(I0+=1);
+		MODIFY(I0+=1); 
 		DM(I0+=0) = AR; //store x(n)
+		
+		AX0=dm(delaySamples);
+		AY0=0;
+		AR=AY0-AX0;
 
+		M0=AR;
+		MODIFY(I0+=M0);
 
+		AR=DM(I0+=0);
+		DM(Left_Channel_Out) = AR;
+
+		M0=AX0;
+		MODIFY(I0+=M0);
+
+/*		AR
 		AR=dm(bcoeffslength);
 		CNTR= AR;
 		MR=0;
@@ -67,52 +80,21 @@ myfilter:
 		IF NE JUMP leffejump;
 		nop;
 		call shiftmr;
-		nop;
+		nop;*/
 		
-leffejump:	call mac_overflow_detector;
+leffejump:	
 	
-		DM(Left_Channel_Out) = MR1;
+		DM(Left_Channel_Out) = AR;
 
 /*right channel processing*/
-hoger:
+hoger: 
 		AR=dm(Right_Channel);
-		MODIFY(I1+=1);
-		DM(I1+=0) = AR;
-
-
-		AR=dm(bcoeffslength);
-		CNTR= AR;
-		MR=0;
-		DO rightloop UNTIL CE;
-			MX0=DM(I1+=M0);
-			MY0=DM(I4+=M4);	
-			MR = MR + MX0 * MY0 (SS);
-			rightloop: nop; //y[n]=x[n]...x[n-k]
-
-
-		AR=dm(acoeffslength);
-
-		CNTR= AR;
-		DO rightyloop UNTIL CE;
-			MX0=DM(I3+=M0);
-			MY0=DM(I5+=M4);
-			MR = MR - MX0 * MY0 (SS);	
-			rightyloop: nop;
-		MODIFY(I3+=1);
-		DM(I3+=0)=MR1;
-
-		AX0=dm(shouldShiftMR);
-		AY0=1;
-		AR=AY0-AX0;
-		IF NE JUMP rickejump;
-		nop;
-		call shiftmr;
-		nop;
+		
 		
 
-rickejump:	call mac_overflow_detector;
+rickejump:	
 		
-		DM(Right_Channel_Out) = MR1;
+		DM(Right_Channel_Out) = AR;
 
 RTS;
 nop;
