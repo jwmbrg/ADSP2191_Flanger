@@ -31,10 +31,10 @@
 /*********************************************************
 * Configurable variables
 *********************************************************/
-.var centerDelay= 14;
-.var centerDeviation =22;
-.var frequency=11;
-.var mix=8;
+.var centerDelay= 29;
+.var centerDeviation =14;
+.var frequency=4;
+.var mix=10;
 
 
 
