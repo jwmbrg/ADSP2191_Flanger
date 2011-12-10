@@ -1,0 +1,34 @@
+#include "def2191_stud-1.h"
+.section/dm    data0;
+.global mac_overflow_detector;
+.var ass1_coeffs[ass1_Coeff_size] ="ass1coeffs.dat";
+.var ass1_right_Buffer[ass1_Coeff_size]; //= 0x0000, 0x0000, 0x000;
+.var ass1_left_Buffer[ass1_Coeff_size];// = 0x0000, 0x0000, 0x0000;
+.var ass1_ycoeffs[ass1_y_size]=0;//"ass5acoeffs.dat";//=0,0,0;//"ycoeffs.dat";
+.var ass1_right_out_Buffer[ass1_y_size]=0; //= 0x0000, 0x0000, 0x0000;
+.var ass1_left_out_Buffer[ass1_y_size]=0;// = 0x0000, 0x0000, 0x0000;
+.section/pm myfilter0;
+mac_overflow_detector:
+
+		sat MR;
+
+
+		AX0=ASTAT;
+		AX1=ASTAT_MV;
+		AR= AX0 AND AX1;
+		AX0=AR;
+		AR = -3;
+		SE = AR;
+		SR = LSHIFT AX0 (LO);
+		
+		
+		AX1 = IOPG;
+		IOPG = General_Purpose_IO;
+		AR=SR0;
+		IO(FLAGS) = AR;
+		IOPG = AX1;
+
+
+RTS;
+nop;
+

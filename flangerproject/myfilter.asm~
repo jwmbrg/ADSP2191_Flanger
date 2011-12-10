@@ -1,0 +1,179 @@
+#include "def2191_stud-1.h"
+#include "lcd_macro.h"
+//.global 	init_buffers;
+.global		myfilter;
+
+.extern		Left_Channel; 
+.extern		Right_Channel;
+.extern 	bcoeffslength;
+.extern		acoeffslength;
+.extern 	mac_overflow_detector;
+.extern		shouldShiftMR;
+.extern 	errstring;
+.extern		Left_Channel_Out;
+.extern 		Right_Channel_Out;
+
+/*#define 	Coeff_size		3
+#define		y_size		2
+.var coeffs[Coeff_size] ="ass5bcoeffs.dat";
+
+.var right_Buffer[Coeff_size]; //= 0x0000, 0x0000, 0x0000;
+.var left_Buffer[Coeff_size];// = 0x0000, 0x0000, 0x0000;
+
+
+.var ycoeffs[y_size]="ass5acoeffs.dat";//=0,0,0;//"ycoeffs.dat";
+.var right_out_Buffer[y_size]; //= 0x0000, 0x0000, 0x0000;
+.var left_out_Buffer[y_size];// = 0x0000, 0x0000, 0x0000;
+*/
+/* Our filter function, that checks the length of the coefficient buffer and loops through the left and right input buffers to generate the output based on previous samples and filter coefficients.
+*/
+.section/pm program0;
+
+myfilter:
+	
+
+		M0=-1;
+		M4=1;
+		
+		AR=dm(Left_Channel);
+		MODIFY(I0+=1);
+		DM(I0+=0) = AR; //store x(n)
+
+
+		AR=dm(bcoeffslength);
+		CNTR= AR;
+		MR=0;
+		DO leftloop UNTIL CE;
+			MX0=DM(I0+=M0);
+			MY0=DM(I4+=M4);	
+			MR = MR + MX0 * MY0 (SS);
+			leftloop:nop;  //y[n]=x[n]...x[n-k]
+
+		
+		AR=dm(acoeffslength);
+
+		CNTR= AR;
+		DO leftyloop UNTIL CE;
+			MX0=DM(I2+=M0);
+			MY0=DM(I5+=M4);	
+			 MR = MR - MX0 * MY0 (SS);
+			leftyloop:nop;
+		MODIFY(I2+=1);
+		DM(I2+=0)=MR1;
+
+		AX0=dm(shouldShiftMR);
+		AY0=1;
+		AR=AY0-AX0;
+		IF NE JUMP leffejump;
+		nop;
+		call shiftmr;
+		nop;
+		
+leffejump:	call mac_overflow_detector;
+	
+		DM(Left_Channel_Out) = MR1;
+
+// this uses the same principle as the left_channel procedure. Only difference is that it uses buffer I1 that is our buffer for the right channel and stores the value back to the pointer Right_Channel
+hoger:
+		AR=dm(Right_Channel);
+		MODIFY(I1+=1);
+		DM(I1+=0) = AR;
+
+
+		AR=dm(bcoeffslength);
+		CNTR= AR;
+		MR=0;
+		DO rightloop UNTIL CE;
+			MX0=DM(I1+=M0);
+			MY0=DM(I4+=M4);	
+			MR = MR + MX0 * MY0 (SS);
+			rightloop: nop; //y[n]=x[n]...x[n-k]
+
+
+		AR=dm(acoeffslength);
+
+		CNTR= AR;
+		DO rightyloop UNTIL CE;
+			MX0=DM(I3+=M0);
+			MY0=DM(I5+=M4);
+			MR = MR - MX0 * MY0 (SS);	
+			rightyloop: nop;
+		MODIFY(I3+=1);
+		DM(I3+=0)=MR1;
+
+		AX0=dm(shouldShiftMR);
+		AY0=1;
+		AR=AY0-AX0;
+		IF NE JUMP rickejump;
+		nop;
+		call shiftmr;
+		nop;
+		
+
+rickejump:	call mac_overflow_detector;
+		
+		DM(Right_Channel_Out) = MR1;
+
+RTS;
+nop;
+
+shiftmr:
+		AR = 13;
+		SE = AR;
+		SR = LSHIFT
+	 MR2 (HI);
+		AR = -3;
+		SE = AR;
+		SR = SR OR LSHIFT MR1 (HI);
+		MR1=SR1;
+		RTS;
+		nop;
+
+
+
+// initialisation of DAGs for the old values of the left and right input signals and the coefficient buffer
+// set up as a circular buffer, so pointer will automatically wrap around.
+// should be called in main loop, before enabling input interrupts.
+/*init_buffers:
+	//init leftbuffer
+	DMPG1 = Page(left_Buffer);
+	I0 = left_Buffer;
+	L0 = length(left_Buffer);
+	AX0 = left_Buffer;
+	Reg(B0) = AX0;
+	
+	DMPG1 = Page(left_out_Buffer);
+	I2 = left_out_Buffer;
+	L2 = length(left_out_Buffer);
+	AX0 = left_out_Buffer;
+	Reg(B2) = AX0;
+
+
+	//init right bufffer
+	
+	DMPG1 = Page(right_Buffer);
+	I1 = right_Buffer;
+	L1 = length(right_Buffer);
+	AX1 = right_Buffer;
+	Reg(B1) = AX1;
+
+	DMPG1 = Page(right_out_Buffer);
+	I3 = right_out_Buffer;
+	L3 = length(right_out_Buffer);
+	AX1 = right_out_Buffer;
+	Reg(B3) = AX1;
+
+	//init coeffs buffer
+	DMPG2 = Page(coeffs);
+	I4 = coeffs;
+	L4 = length(coeffs);
+	AX0= coeffs;
+	Reg(B4) = AX0;
+
+	DMPG2 = Page(ycoeffs);
+	I5 = ycoeffs;
+	L5 = length(ycoeffs);
+	AX0= ycoeffs;
+	Reg(B5) = AX0;
+
+	RTS;*/

@@ -1,0 +1,146 @@
+
+ARCHITECTURE(ADSP-2191)
+$OBJECTS   =    $COMMAND_LINE_OBJECTS;
+// $LIBRARIES = $IOLIB, $CLIBS;
+
+MEMORY
+{
+	// *** Copied from 'ADSP-2191.ldf' from AD *****************************
+	//**********************************************************************
+	    // The memory section where the reset vector resides
+   	mem_INT_RSTI     { TYPE(PM RAM) START(0x000000) END(0x00001f) WIDTH(24) }
+
+       // The memory sections where the interrupt vector code and an
+       // interrupt table used by library functions resides. The
+       // library functions concerned include signal(), interrupt(),
+       // raise(), and clear_interrupts()
+   	mem_INT_PWRDWN   { TYPE(PM RAM) START(0x000020) END(0x00003f) WIDTH(24) }
+   	mem_INT_KERNEL   { TYPE(PM RAM) START(0x000040) END(0x00005f) WIDTH(24) }
+   	mem_INT_STKI     { TYPE(PM RAM) START(0x000060) END(0x00007f) WIDTH(24) }
+   	mem_INT_INT4     { TYPE(PM RAM) START(0x000080) END(0x00009f) WIDTH(24) }
+   	mem_INT_INT5     { TYPE(PM RAM) START(0x0000a0) END(0x0000bf) WIDTH(24) }
+   	mem_INT_INT6     { TYPE(PM RAM) START(0x0000c0) END(0x0000df) WIDTH(24) }
+   	mem_INT_INT7     { TYPE(PM RAM) START(0x0000e0) END(0x0000ff) WIDTH(24) }
+   	mem_INT_INT8     { TYPE(PM RAM) START(0x000100) END(0x00011f) WIDTH(24) }
+   	mem_INT_INT9     { TYPE(PM RAM) START(0x000120) END(0x00013f) WIDTH(24) }
+   	mem_INT_INT10    { TYPE(PM RAM) START(0x000140) END(0x00015f) WIDTH(24) }
+   	mem_INT_INT11    { TYPE(PM RAM) START(0x000160) END(0x00017f) WIDTH(24) }
+   	mem_INT_INT12    { TYPE(PM RAM) START(0x000180) END(0x00019f) WIDTH(24) }
+   	mem_INT_INT13    { TYPE(PM RAM) START(0x0001a0) END(0x0001bf) WIDTH(24) }
+   	mem_INT_INT14    { TYPE(PM RAM) START(0x0001c0) END(0x0001df) WIDTH(24) }
+   	mem_INT_INT15    { TYPE(PM RAM) START(0x0001e0) END(0x0001ff) WIDTH(24) }
+	// **********************************************************************
+   	
+        // interrupts { TYPE(PM RAM) START(0) END(0x1ff) WIDTH(24) }
+        int_pm { TYPE(PM RAM) START(0x000200) END(0x007fff) WIDTH(24) }
+        int_dm { TYPE(DM RAM) START(0x008000) END(0x00ffff) WIDTH(16) }
+}
+
+PROCESSOR p0
+{
+	OUTPUT( $COMMAND_LINE_OUTPUT_FILE )
+	SECTIONS
+	{
+	// *** Copied from 'ADSP-2191.ldf' from AD *****************************
+	//**********************************************************************
+        sec_INT_RSTI {
+        	INPUT_SECTIONS ( $COMMAND_LINE_OBJECTS( IVreset ))
+     	} > mem_INT_RSTI
+
+     	sec_INT_PWRDWN {
+        	INPUT_SECTIONS ( $COMMAND_LINE_OBJECTS( IVpwrdwn ))
+     	} > mem_INT_PWRDWN
+
+     	sec_INT_STKI {
+        	INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVstackint ))
+     	} > mem_INT_STKI
+
+     	sec_INT_KERNEL {
+        	INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVkernel ))
+     	} > mem_INT_KERNEL
+
+     	sec_INT_INT4 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint4 )) 
+     	} > mem_INT_INT4
+     	sec_INT_INT5 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint5 )) 
+     	} > mem_INT_INT5
+     	sec_INT_INT6 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint6 )) 
+     	} > mem_INT_INT6
+     	sec_INT_INT7 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint7 )) 
+     	} > mem_INT_INT7
+     	sec_INT_INT8 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint8 )) 
+     	} > mem_INT_INT8
+     	sec_INT_INT9 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint9 )) 
+     	} > mem_INT_INT9
+     	sec_INT_INT10 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint10 ))
+     	} > mem_INT_INT10
+     	sec_INT_INT11 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint11 ))
+     	} > mem_INT_INT11
+     	sec_INT_INT12 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint12 ))
+     	} > mem_INT_INT12
+     	sec_INT_INT13 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint13 ))
+     	} > mem_INT_INT13
+     	sec_INT_INT14 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint14 ))
+     	} > mem_INT_INT14
+     	sec_INT_INT15 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint15 ))
+     	} > mem_INT_INT15
+	
+		/*	
+		sec_INT_RSTI {
+        	INPUT_SECTIONS ( $COMMAND_LINE_OBJECTS( IVreset ) $LIBRARIES( IVreset ) )
+     	} > mem_INT_RSTI
+
+     	sec_INT_PWRDWN {
+        	INPUT_SECTIONS ( $COMMAND_LINE_OBJECTS( IVpwrdwn ) $LIBRARIES( IVpwrdwn ) )
+     	} > mem_INT_PWRDWN
+
+     	sec_INT_STKI {
+        	INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVstackint ) $LIBRARIES( IVstackint ) )
+     	} > mem_INT_STKI
+
+     	sec_INT_KERNEL {
+        	INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVkernel ) $LIBRARIES( IVkernel ) )
+     	} > mem_INT_KERNEL
+
+     	sec_INT_INT4 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint4 ) $LIBRARIES( IVint4 ) ) 
+     	} > mem_INT_INT4
+     	sec_INT_INT5 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint5 ) $LIBRARIES( IVint5 ) ) 
+     	} > mem_INT_INT5
+     	sec_INT_INT6 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint6 ) $LIBRARIES( IVint6 ) ) 
+     	} > mem_INT_INT6
+     	sec_INT_INT7 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint7 ) $LIBRARIES( IVint7 ) ) 
+     	} > mem_INT_INT7
+     	sec_INT_INT8 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint8 ) $LIBRARIES( IVint8 ) ) 
+     	} > mem_INT_INT8
+     	sec_INT_INT9 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint9 ) $LIBRARIES( IVint9 ) ) 
+     	} > mem_INT_INT9
+     	sec_INT_INT10 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint10 ) $LIBRARIES( IVint10 ) )
+     	} > mem_INT_INT10
+     	sec_INT_INT11 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint11 ) $LIBRARIES( IVint11 ) )
+     	} > mem_INT_INT11
+     	sec_INT_INT12 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint12 ) $LIBRARIES( IVint12 ) )
+     	} > mem_INT_INT12
+     	sec_INT_INT13 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint13 ) $LIBRARIES( IVint13 ) )
+     	} > mem_INT_INT13
+     	sec_INT_INT14 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint14 ) $LIBRARIES( IVint14 ) )
+     	} > mem_INT_INT14
+     	sec_INT_INT15 { INPUT_SECTIONS( $COMMAND_LINE_OBJECTS( IVint15 ) $LIBRARIES( IVint15 ) )
+     	} > mem_INT_INT15
+		*/
+		/*
+		interrupts
+		{
+			INPUT_SECTIONS( $COMMAND_LINE_OBJECTS(interrupts))
+		} > interrupts
+		*/
+		int_pm
+		{
+			INPUT_SECTIONS( $COMMAND_LINE_OBJECTS(program0))
+			INPUT_SECTIONS( $COMMAND_LINE_OBJECTS(pmdata0))
+			
+		} > int_pm
+		int_dm
+		{
+			INPUT_SECTIONS( $COMMAND_LINE_OBJECTS(data0))
+		} > int_dm
+	}
+}

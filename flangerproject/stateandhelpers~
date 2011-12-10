@@ -1,0 +1,25 @@
+.global mac_overflow_detector;
+mac_overflow_detector:
+
+		sat MR;
+
+
+		AX0=ASTAT;
+		AX1=ASTAT_MV;
+		AR= AX0 AND AX1;
+		AX0=AR;
+		AR = -3;
+		SE = AR;
+		SR = LSHIFT AX0 (LO);
+		
+		
+		AX1 = IOPG;
+		IOPG = General_Purpose_IO;
+		AR=SR0;
+		IO(FLAGS) = AR;
+		IOPG = AX1;
+
+
+RTS;
+nop;
+
