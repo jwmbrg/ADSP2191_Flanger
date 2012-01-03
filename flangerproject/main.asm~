@@ -6,17 +6,18 @@ main.asm
 
 #include "def2191_stud-1.h"
 #include "lcd_macro.h"
-#define   CMAX 29
+#define   CMAX 20
 #define   CMIN 0
 
-#define   DMAX 14
-#define   DMIN 1	
+#define   DMAX 10
+#define   DMIN 0	
 
 #define   FMAX 4
 #define   FMIN 0
 
 #define   MMAX 10	//only filtered
 #define   MMIN 0	//only original
+#define _SAMPSPERMILLI 48
 /************************************************************************************************/
 /*			   GLOBAL & EXTERNAL DECLARATIONS					*/	
 /************************************************************************************************/    
@@ -27,7 +28,8 @@ main.asm
 .global         CCW1;
 .global         CW2;
 .global         CCW2;
-
+.global printadigit;
+.global tempdigit;
 
 // External symbols
 //egentillagda
@@ -52,12 +54,22 @@ main.asm
 
 
 .extern init_buffers;
+
 .extern centerDelay;
 .extern delaySamples;
+
+
 
 .extern centerDeviation;
 .extern frequency;
 .extern mix;
+.extern decimalmix;
+
+.extern delayTop;
+.extern delayBottom;
+.extern stepTimes;
+
+
 /************************************************************************************************/  
 /*                              DM DATA                                                         */
 /************************************************************************************************/ 
@@ -111,8 +123,8 @@ Start:
 	
 	
 	AR=0;
-	call  init_buffers;
-	call changetodelay;
+
+	
 
 	
 
@@ -120,6 +132,12 @@ Start:
 	// Clear RX_Status flag indicating incoming RX data is audio data and can be processed according 
 	ax0=0x0000;
 	dm(RX_Status) = ax0;
+	//DIS sec_reg;
+	call  init_buffers;
+	nop;
+	call calc_params;
+	call changetodelay;
+	//ena sec_reg;
 	
 // ----- Go into infinite program loop after initialization... ------
 wait_forever:
@@ -143,7 +161,8 @@ PUSH1:
         nop;
         RTS;
 	
-CW1:	AR=dm(cursetting);
+CW1:	DIS int;
+	AR=dm(cursetting);
 	AX1=AR;
 	AR=AX1+1;
 	AX0=3;
@@ -170,6 +189,7 @@ nextsetting:
 	nop;
         RTS;
 CCW1:	
+	DIS int;
 	AR=dm(cursetting);
 	AX1=AR;
 	AR=AX1-1;
@@ -179,9 +199,11 @@ CCW1:
 	nop;	
 	AR=3;
 	jump nextsetting;
+	nop;
 	RTS;
 
-CW2:	AR=dm(cursetting);
+CW2:	DIS int;
+	AR=dm(cursetting);
        	AR=AR-0;
 	IF EQ JUMP inc_cdelay;
         AR=AR-1;
@@ -192,7 +214,7 @@ CW2:	AR=dm(cursetting);
 	IF EQ JUMP inc_mix;
         
 	RTS;
-CCW2:	
+CCW2:	DIS int;
 	AR=dm(cursetting);
        	AR=AR-0;
 	IF EQ JUMP dec_cdelay;
@@ -239,20 +261,21 @@ dec_cdelay:
 	dm(centerDelay)=AR;
 	jump changetodelay;
 
-inc_dev:
+inc_dev: /*test for hardcoded max*/
+	
 	AR=dm(centerDeviation);
 	AR=AR+1;
-	
 	AX1=DMAX;	
 	AR=AR-AX1;
+	IF GT JUMP changetodeviation;
 
-	//AR=AR-29;
-	
-	IF GT JUMP endInc; 
 	AR=dm(centerDeviation);
-	AR=AR+1;	
+	AR=AR+1;
 	dm(centerDeviation)=AR;
+	call testDeviation;
+
 	jump changetodeviation;
+
 dec_dev:
 	AR=dm(centerDeviation);
 	AR=AR-1;
@@ -329,37 +352,26 @@ dec_mix:
 
 
 endInc:
+	call testDeviation;
+	call calc_params;
+	ena int;
 	RTS;
 /************************************************************************************************/  
 /*                  Prints the current configurabled parameter and its value       	        */
 /************************************************************************************************/ 
 changetodelay:
+	call testDeviation;
 	Output_LCD_Token(cdelaytext,16,1,0);
 	AR=dm(centerDelay);
 
 	//should be removed
 
 	dm(tempdigit)=AR;
-	//AR=MSTAT
-	//AR=Setbit M_MODE Of AR;	
-	ena M_MODE;
-	//MSTAT=AR;
-	nop;
-	MX0=AR;
-	MY0=441;
-	MR=0;
-	MR=MR+MX0*MY0 (SS);
-	AR=MR0;
-	//AR=12000;
 
-	dm(delaySamples)=AR;	
-
-	//AR=dm(centerDelay);
-	
 	call printadigit;
 	nop;
-
-	
+	call calc_params;
+	ena int;
 	RTS;
 	nop;
 
@@ -367,10 +379,15 @@ changetodelay:
 
 changetodeviation:
 Output_LCD_Token(devdelaytext,16,1,0);
+	call testDeviation;
+	
 	AR=dm(centerDeviation);
 	dm(tempdigit)=AR;
 	call printadigit;
+	call calc_params;
+	ena int;
 	RTS;
+	
 	nop;
 
 changetofrequency:
@@ -378,6 +395,8 @@ changetofrequency:
 	AR=dm(frequency);
 	dm(tempdigit)=AR;
 	call printadigit;
+	call calc_params;
+	ena int;
 	RTS;
 	nop;
 changetomix:
@@ -385,8 +404,133 @@ changetomix:
 	AR=dm(mix);
 	dm(tempdigit)=AR;
 	call printadigit;
+	call calc_params;
+	ena int;
 	RTS;
 	nop;
+
+
+/************************************************************************************************/  
+/*                 Converts from user defined variables to discrete variables  	        */
+/************************************************************************************************/ 
+
+calc_params:
+	//center delay in samples
+	ena M_MODE;	
+	nop;
+	nop;	
+	nop;
+	AR=dm(centerDelay);
+	
+	//MSTAT=AR;
+	nop;
+	MX0=AR;
+	MY0=_SAMPSPERMILLI ;
+	MR=0;
+	MR=MR+MX0*MY0 (SS);
+	AR=MR0;
+	////DDASASDDASDA
+
+	//AR=11;//delete me//AR=12000;
+	//DM(centerDelay)=AR;
+	AR=880;
+
+	dm(delaySamples)=AR;
+	
+	//topdelay
+	Ar=dm(centerDeviation);
+
+	MX0=AR;
+	MY0=_SAMPSPERMILLI;
+	MR=0;
+	MR=MR+MX0*MY0 (SS);	
+	AR=dm(delaySamples);
+	AR=AR+MR0;
+	//AR=1320;//delete me//AR=12000;
+	dm(delayTop)=AR;
+
+	//bottomdelay in samples
+	Ar=dm(centerDeviation);
+	MX0=AR;
+	MY0=_SAMPSPERMILLI;
+	MR=0;
+	MR=MR+MX0*MY0 (SS);	
+	AR=dm(delaySamples);
+	AR=AR-MR0;
+	//AR=440;//delete me//AR=12000;cc
+
+	dm(delayBottom)=AR;
+	/*how hoften should we increase delayCenter*/
+	
+	
+	
+	AR=dm(centerDeviation);
+	MX0=AR;
+	MY0=_SAMPSPERMILLI;
+	MR=0;
+	MR=MR+MX0*MY0 (SS);
+	MX0=MR0;
+	MY0=40000;
+	MR=0;
+	MR=MR+MX0*MY0 (SS);
+	AR=250;//MR0;
+
+	dm(stepTimes)=AR;//MR0;
+/*
+//what should the true mixvalue be:
+	AX0=dm(mix);
+	AR=AX0-1;
+	AY0=0x0;
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x1001;
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x1C01; //ca_ 2
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x2801; // ca 3
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x3801; //ca 4
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x4001; //ca 5
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x5001; //ca 6
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x5801; //ca 7
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x6801; //ca 8
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x7801; //ca 9
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+	AR=AX0-1;
+	AY0=0x7fff; //ca 10
+	dm(decimalmix)=AY0;
+	IF LT JUMP utmede; 
+*/
+	dis M_MODE;	
+	nop;	
+	nop;
+	nop;
+utmede:
+	RTS;
+
 /************************************************************************************************/  
 /*                  Prints a two digit number on position 15 and 16 on the display    	        */
 /************************************************************************************************/ 
@@ -513,3 +657,24 @@ enddigit:
 
 RTS;
 nop;
+
+testDeviation:
+		/*test for delaybased max*/
+	AR=dm(centerDeviation);
+	AX1=AR;	
+
+	AR=dm(centerDelay);
+	AX0=AR;		// deviation - CENTERDELAY/2
+	AR=dm(centerDeviation);
+	AX1=AR;	
+
+	AR=AX1-AX0;			//if that is greater than zero, it is to big.
+
+	IF LE JUMP endTestDev;
+	dm(centerDeviation)=AX0;	
+
+endTestDev:
+
+
+	rts;
+	

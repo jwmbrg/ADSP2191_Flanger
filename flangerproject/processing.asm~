@@ -120,7 +120,11 @@ Playback_Audio_Data:
 
 
 // ****** Process input samples here... ******
+	//DIS SEC_REG;
+	nop;
 	call myfilter;
+	//ENA SEC_REG;
+	nop;
 	nop;
 	
 

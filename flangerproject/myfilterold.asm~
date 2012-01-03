@@ -12,6 +12,8 @@
 .extern 	errstring;
 .extern		Left_Channel_Out;
 .extern 		Right_Channel_Out;
+.extern stepTimes;
+
 
 /*#define 	Coeff_size		3
 #define		y_size		2
