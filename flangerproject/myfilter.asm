@@ -90,8 +90,9 @@ myfilter:
 
 
 /***************räkna ut om vi ska räkna ut ett nytt sample*************************/
-
 		
+		
+			
 		AR=dm(stepState);
 		
 		AR=AR+0x0001;

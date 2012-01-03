@@ -25,11 +25,12 @@
 .extern tempdigit;
 .extern counter;
 .extern countertext;
+
 .section/pm program0;
 
 myfilter:
 		
-		/* Left Channel processing*/
+		/*Left Channel processing*/
 		dis M_MODE;		
 	
 		M0=0x0001;
@@ -119,9 +120,9 @@ hoger:
 		
 
 rickejump:	
-		
-		//DM(Right_Channel_Out) = AR;
 
+
+		//DM(Right_Channel_Out) = AR;
 		RTS;
 
 

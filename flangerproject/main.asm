@@ -12,12 +12,13 @@ main.asm
 #define   DMAX 10
 #define   DMIN 0	
 
-#define   FMAX 4
+#define   FMAX 10
 #define   FMIN 0
 
 #define   MMAX 10	//only filtered
 #define   MMIN 0	//only original
 #define _SAMPSPERMILLI 48
+#define _SAMPSPERSECOND 48000
 /************************************************************************************************/
 /*			   GLOBAL & EXTERNAL DECLARATIONS					*/	
 /************************************************************************************************/    
@@ -433,7 +434,7 @@ calc_params:
 
 	//AR=11;//delete me//AR=12000;
 	//DM(centerDelay)=AR;
-	AR=880;
+	//AR=880;
 
 	dm(delaySamples)=AR;
 	
@@ -455,27 +456,48 @@ calc_params:
 	MY0=_SAMPSPERMILLI;
 	MR=0;
 	MR=MR+MX0*MY0 (SS);	
-	AR=dm(delaySamples);
+	AR=dm(delaySamples); 
 	AR=AR-MR0;
 	//AR=440;//delete me//AR=12000;cc
 
 	dm(delayBottom)=AR;
 	/*how hoften should we increase delayCenter*/
 	
-	
-	
-	AR=dm(centerDeviation);
-	MX0=AR;
-	MY0=_SAMPSPERMILLI;
+	/*
+	Implementation of, 44100*frequency/(2*lengtinsamples)
+*/
+	ena M_MODE;
+	AR=dm(frequency);//ftal
+	AY0=44100;
 	MR=0;
-	MR=MR+MX0*MY0 (SS);
-	MX0=MR0;
-	MY0=40000;
-	MR=0;
-	MR=MR+MX0*MY0 (SS);
-	AR=25;//MR0;
+	MX0=AY0;
+	MY0=AR;
+	MR=MR+MX0*MY0 (UU);
+	
 
+	AY1=MR1;		//44100*ftalet
+	AY0=MR0;
+
+	MR=0;
+	MX0=182; //dont forget bitch
+	MY0=dm(centerDeviation);
+	MR=MR+MX0*MY0 (UU);
+
+	
+	AR=MR0;
+	
+	call signed_div;			//division
+	
+	/*AR=dm(frequency);//ftal
+	AX0=10;
+	MR=0;
+	MX0=AR;
+	MY0=AX0;
+	MR=MR+MX0*MY0 (SS);
+*/
 	dm(stepTimes)=AR;//MR0;
+
+
 /*
 //what should the true mixvalue be:
 	AX0=dm(mix);
@@ -677,4 +699,31 @@ endTestDev:
 
 
 	rts;
+
+
+/* signed division algorithm with fix for negative division error
+inputs:
+  AYy1 - 16 MSB of numerator
+  AYy0 - 16 LSB of numerator
+  AR   - denominator
+outputs:
+  AR   - corrected quotient
+intermediate (scratch) registers:
+  MR0, AF   */
+signed_div:
+  MR0 = AR, AR = ABS AR;
+  /*   save copy of denominator, make it positive  */
+  DIVS AY1, AR;   DIVQ AR;
+  DIVQ AR;   DIVQ AR;
+  DIVQ AR;   DIVQ AR;
+  DIVQ AR;   DIVQ AR;
+  DIVQ AR;   DIVQ AR;
+  DIVQ AR;   DIVQ AR;
+  DIVQ AR;   DIVQ AR;
+  DIVQ AR;   DIVQ AR;
+  AR = AY0, AF = PASS MR0;   /*  get sign of denominator  */
+  IF LT AR = -AY0;    /* if neg, invert output, place in ar  */
+
+  RTS;
+
 	

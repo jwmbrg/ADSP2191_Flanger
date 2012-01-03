@@ -31,6 +31,7 @@
 .global decimalmix;
 .global countertext;
 .global counter;
+.global shouldvary;
 .section/dm    data0;
 /*********************************************************
 * Other variables
@@ -44,7 +45,8 @@
 
 .var centerDelay= 20;
 .var centerDeviation =10;
-.var frequency=4;
+.var frequency=10;
+.var shouldvary=1;
 .var mix=10;
 .var decimalmix=1;
 
